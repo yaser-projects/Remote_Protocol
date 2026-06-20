@@ -1,4 +1,3 @@
-
 //******************************************************************************************************
 //
 // File Name    : Firmware AVR
@@ -9,50 +8,20 @@
 // Author:      : Yaser Rashnabadi
 //
 //******************************************************************************************************
-//======================================================================================================
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Interface Header Library use Firmware <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//======================================================================================================
 #ifndef F_CPU
 #define F_CPU 8000000UL
 #endif
 
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/interrupt.h>
-#include <avr/wdt.h>
+#include <stdio.h>
 
 #include "Remote.h"
-//======================================================================================================
-// --------------------------------------- Global Setting ----------------------------------------------
-//\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 static uint32_t Code;
 static uint32_t MirrorCode;
-static uint8_t OutPut;
-static uint8_t id;
-//======================================================================================================
-// ----------------------------------------- Macro Setting ---------------------------------------------
-//\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+char buffer[64];
 
-#define SAVE1 6
-#define SAVE2 7
-#define SAVE3 0
-#define SAVE4 1
-//----------------------------------------------------
-#define DELETE1 4
-#define DELETE2 3
-#define DELETE3 1
-#define DELETE4 0
-//----------------------------------------------------
-#define JUMPER1 5
-#define JUMPER2 4
-#define JUMPER3 3
-#define JUMPER4 2
-//----------------------------------------------------
-#define RELEY1 3
-#define RELEY2 2
-#define RELEY3 1
-#define RELEY4 0
 //=============================================================================
 //----------------------------Select PORT & PIN -------------------------------
 
@@ -60,189 +29,107 @@ static uint8_t id;
 #define DDR__Decoder DDRD
 #define RXD 2 // Pin 2
 
-#define RESTART_STATE 0x89ABCDEF
-//==================================================================================================
-// ----------------------------------------------------------------------- Auxiliary functions Macro
-//==================================================================================================
-
-#define Reley__ON(_byte_, _bit_) ((_byte_) |= (1UL << (_bit_)))
-#define Reley_OFF(_byte_, _bit_) ((_byte_) &= ~(1UL << (_bit_)))
-
-Database database;
-RemoteTable table;
 REMOTE ev1527(PORT_Decoder, DDR__Decoder, RXD, PULL_UP);
 //==================================================================================================
 // ----------------------------------------------------------------------------- Auxiliary functions
 //==================================================================================================
-//----------------- Save functions - Turn ON relays for Save operation -----------------------------
-
-bool task_save1(BUTTON &button)
+void UART_Init(void)
 {
-  PORTC++;
-  // uint8_t save = 0;
-  // Reley__ON(save, RELEY1);
-  // table.Field.ID = id++;
-  // table.Field.Address = ev1527.data.Frame;
-  // table.Field.Switch = (save |= 0xF0);
-  // database.InsertRecord(table);
-  // PORTC = OutPut | save;
-  return true; //<-- Return true for execute handler only once after button state changed
-}
+  // تنظیم Baud Rate
+  // UBRRH = (unsigned char)(UBRR_VALUE >> 8);
+  // UBRRL = (unsigned char)UBRR_VALUE;
 
-bool task_save2(BUTTON &button)
-{
-  uint8_t save = 0;
-  Reley__ON(save, RELEY2);
-  table.Field.ID = id++;
-  table.Field.Address = ev1527.data.Frame;
-  table.Field.Switch = (save |= 0xF0);
-  database.InsertRecord(table);
-  PORTC = OutPut | save;
-  return true;
-}
+  // Baud Rate = 9600 @ 8MHz
+  UBRRH = 0;
+  UBRRL = 51;
 
-bool task_save3(BUTTON &button)
-{
-  uint8_t save = 0;
-  Reley__ON(save, RELEY3);
-  table.Field.ID = id++;
-  table.Field.Address = ev1527.data.Frame;
-  table.Field.Switch = (save |= 0xF0);
-  database.InsertRecord(table);
-  PORTC = OutPut | save;
-  return true;
-}
+  // TX Enable
+  UCSRB = (1 << TXEN);
 
-bool task_save4(BUTTON &button)
-{
-  uint8_t save = 0;
-  Reley__ON(save, RELEY4);
-  table.Field.ID = id++;
-  table.Field.Address = ev1527.data.Frame;
-  table.Field.Switch = (save |= 0xF0);
-  database.InsertRecord(table);
-  PORTC = OutPut | save;
-  return true;
+  // 8 Data Bits, 1 Stop Bit, No Parity
+  UCSRC = (1 << URSEL) |
+          (1 << UCSZ1) |
+          (1 << UCSZ0);
 }
 //==================================================================================================
-//----------------- Delete functions - Turn OFF relays for Delete operation ------------------------
-
-bool task_delete1(BUTTON &button)
+//------------ Jumper functions - Override relay states based on jumper position ----------------
+void UART_Send_U8(uint8_t data)
 {
-  uint8_t _delete = 0xFF;
-
-  Reley_OFF(_delete, RELEY1);
-  database.Delete(_delete);
-  Reley_OFF(OutPut, RELEY1);
-  PORTC = OutPut;
-  return true;
-}
-
-bool task_delete2(BUTTON &button)
-{
-  uint8_t _delete = 0xFF;
-
-  Reley_OFF(_delete, RELEY2);
-  database.Delete(_delete);
-  Reley_OFF(OutPut, RELEY2);
-  PORTC = OutPut;
-  return true;
-}
-
-bool task_delete3(BUTTON &button)
-{
-  uint8_t _delete = 0xFF;
-
-  Reley_OFF(_delete, RELEY3);
-  database.Delete(_delete);
-  Reley_OFF(OutPut, RELEY3);
-  PORTC = OutPut;
-  return true;
-}
-
-bool task_delete4(BUTTON &button)
-{
-  uint8_t _delete = 0xFF;
-
-  Reley_OFF(_delete, RELEY4);
-  database.Delete(_delete);
-  Reley_OFF(OutPut, RELEY4);
-  PORTC = OutPut;
-  return true;
+  while (!(UCSRA & (1 << UDRE)))
+    ;
+  UDR = data;
 }
 //==================================================================================================
-//------------ Jumper functions - Override relay states based on jumper position -------------------
-
-bool task_Jumper1(BUTTON &button)
+//------------ Jumper functions - Override relay states based on jumper position ----------------
+void UART_Send_U32(uint32_t data)
 {
-  // PORTC++;
-  // Reley_OFF(OutPut, RELEY1);
-  // PORTC = OutPut;
-  return true;
-}
-
-bool task_Jumper2(BUTTON &button)
-{
-  Reley_OFF(OutPut, RELEY2);
-  PORTC = OutPut;
-  return true;
-}
-
-bool task_Jumper3(BUTTON &button)
-{
-  Reley_OFF(OutPut, RELEY3);
-  PORTC = OutPut;
-  return true;
-}
-
-bool task_Jumper4(BUTTON &button)
-{
-  Reley_OFF(OutPut, RELEY4);
-  PORTC = OutPut;
-  return true;
+  while (!(UCSRA & (1 << UDRE)))
+    ;
+  for (uint8_t i = 0; i < 4; i++)
+    UDR = (uint8_t)data >> (i * 8);
 }
 //==================================================================================================
-// -------------------------------------------- Setup ---------------------------------------------
-//==================================================================================================
+//------------ Jumper functions - Override relay states based on jumper position ----------------
+void UART_SendChar(char data)
+{
+  // انتظار تا بافر ارسال خالی شود
+  while (!(UCSRA & (1 << UDRE)))
+    ;
 
+  // ارسال داده
+  UDR = data;
+}
+//==================================================================================================
+//------------ Jumper functions - Override relay states based on jumper position ----------------
+void UART_SendString(const char *str)
+{
+  while (*str)
+  {
+    UART_SendChar(*str++);
+  }
+}
+//==================================================================================================
 int main()
 {
-  PORTB = 0xFF;
-  DDRB = 0x00;
-
-  PORTC = 0xFF;
-  DDRC = 0x00;
-
   PORTD = 0xFF;
   DDRD = 0x00;
 
-  ACSR = 0x80;
-  SFIOR = 0x00;
+  UART_Init();
+  UART_SendString("\r\n[SYSTEM] EV1527 Receiver Started\r\n");
 
   REMOTE::init();
 
-  // wdt_enable(WDTO_2S);
-  //==================================================================================================
-  //--------------------------------------------- Loop -----------------------------------------------
-  //==================================================================================================
   while (1)
   {
-
     if (ev1527.data.Bits.Detect)
     {
-      if (MirrorCode != Code)
+      if (MirrorCode == Code)
       {
         Code = ev1527.data.Frame;
-        OutPut ^= database.Serach(Code);
-        OutPut |= 0xF0;
-        PORTC = OutPut;
+      }
+      else
+      {
+
+        // EV1527 Debug Log - Compact & Informative
+
+        UART_SendString("\r\n [EV1527]");
+
+        sprintf(buffer, "\r\n | Frame: 0x%06lX", ev1527.data.Frame);
+        UART_SendString(buffer);
+
+        sprintf(buffer, "\r\n | Addr:  0x%05lX", ev1527.data.Bits.Address);
+        UART_SendString(buffer);
+
+        sprintf(buffer, "\r\n | Key:   0x%X\r\n", ev1527.data.Bits.Keys);
+        UART_SendString(buffer);
+
+        UART_SendString("\r\n"); // یک بار در آخر
 
         MirrorCode = Code;
       }
     }
     else
     {
-
       MirrorCode = 0;
     }
   }
