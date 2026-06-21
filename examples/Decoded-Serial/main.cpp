@@ -96,15 +96,9 @@ int main()
   {
     if (ev1527.data.detected)
     {
-      if (MirrorCode == Code)
+      
+      if (MirrorCode != Code)
       {
-        Code = ev1527.data.frame;
-      }
-      else
-      {
-
-        // EV1527 Debug Log - Compact & Informative
-
         UART_SendString("\r\n [EV1527]");
 
         sprintf(buffer, "\r\n | Frame: 0x%06lX", ev1527.data.frame);
@@ -119,6 +113,10 @@ int main()
         UART_SendString("\r\n"); // یک بار در آخر
 
         MirrorCode = Code;
+      }
+      else
+      {
+        Code = ev1527.data.frame;
       }
     }
     else
