@@ -17,31 +17,28 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 
-#include "Remote.h"
+#include "RemoteDecoder.h"
 
-#define PORT_Decoder PORTD
-#define DDR__Decoder DDRD
-#define RXD 2 // Pin 2
 
-REMOTE ev1527(PORT_Decoder, DDR__Decoder, RXD, PULL_UP);
+RemoteDecoder ev1527(PORTD, DDRD, 2, PULL_UP);
 
 int main()
 {
   PORTC = 0x00;
   DDRC = 0xFF;
 
-  REMOTE::init();
+  RemoteDecoder::init(EV1527_CONFIG);
 
   while (1)
   {
 
-    if (ev1527.data.Bits.Detect)
-    {
-      PORTC = ev1527.data.Bits.Keys;
-    }
-    else
-    {
-      PORTC = 0;
-    }
+     if (ev1527.data.detected)
+     {
+       PORTC = ev1527.data.key;
+     }
+     else
+     {
+       PORTC = 0;
+     }
   }
 }

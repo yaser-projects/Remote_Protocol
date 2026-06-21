@@ -16,20 +16,13 @@
 #include <avr/interrupt.h>
 #include <stdio.h>
 
-#include "Remote.h"
+#include "RemoteDecoder.h"
 
 static uint32_t Code;
 static uint32_t MirrorCode;
 char buffer[64];
 
-//=============================================================================
-//----------------------------Select PORT & PIN -------------------------------
-
-#define PORT_Decoder PORTD
-#define DDR__Decoder DDRD
-#define RXD 2 // Pin 2
-
-REMOTE ev1527(PORT_Decoder, DDR__Decoder, RXD, PULL_UP);
+RemoteDecoder ev1527(PORTD, DDRD, 2, PULL_UP);
 //==================================================================================================
 // ----------------------------------------------------------------------------- Auxiliary functions
 //==================================================================================================
@@ -97,15 +90,15 @@ int main()
   UART_Init();
   UART_SendString("\r\n[SYSTEM] EV1527 Receiver Started\r\n");
 
-  REMOTE::init();
+  RemoteDecoder::init(EV1527_CONFIG);
 
   while (1)
   {
-    if (ev1527.data.Bits.Detect)
+    if (ev1527.data.detected)
     {
       if (MirrorCode == Code)
       {
-        Code = ev1527.data.Frame;
+        Code = ev1527.data.frame;
       }
       else
       {
@@ -114,13 +107,13 @@ int main()
 
         UART_SendString("\r\n [EV1527]");
 
-        sprintf(buffer, "\r\n | Frame: 0x%06lX", ev1527.data.Frame);
+        sprintf(buffer, "\r\n | Frame: 0x%06lX", ev1527.data.frame);
         UART_SendString(buffer);
 
-        sprintf(buffer, "\r\n | Addr:  0x%05lX", ev1527.data.Bits.Address);
+        sprintf(buffer, "\r\n | Addr:  0x%05lX", ev1527.data.address);
         UART_SendString(buffer);
 
-        sprintf(buffer, "\r\n | Key:   0x%X\r\n", ev1527.data.Bits.Keys);
+        sprintf(buffer, "\r\n | Key:   0x%X\r\n", ev1527.data.key);
         UART_SendString(buffer);
 
         UART_SendString("\r\n"); // یک بار در آخر
