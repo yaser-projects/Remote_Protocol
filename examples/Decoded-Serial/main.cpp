@@ -110,7 +110,7 @@ int main()
         sprintf(buffer, "\r\n | Key:   0x%X\r\n", ev1527.data.key);
         UART_SendString(buffer);
 
-        UART_SendString("\r\n"); // یک بار در آخر
+        UART_SendString("\r\n"); 
 
         MirrorCode = Code;
       }
