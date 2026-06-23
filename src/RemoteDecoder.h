@@ -1,11 +1,11 @@
 //****************************************************************************************************************************
 //
-// File Name		: Remote.h
+// File Name	   : Remote.h
 // Title		      : Remote interface header file
 // software       : version 3.0
-// Target MCU		: Atmel AVR Series
-// Created:       : 23/06/2026
-// Author:        : Yaser Rashnabadi
+// Target MCU     : Atmel AVR Series
+// Created        : 23/06/2026
+// Author         : Yaser Rashnabadi
 //
 //****************************************************************************************************************************
 #ifndef REMOTE_DECODER_H_
