@@ -1,7 +1,7 @@
 //****************************************************************************************************************************
 //
 // File Name	   : Remote.h
-// Title		      : Remote interface header file
+// Title          : Remote interface header file
 // software       : version 3.0
 // Target MCU     : Atmel AVR Series
 // Created        : 23/06/2026
