@@ -98,6 +98,7 @@ int main()
   {
     if (ev1527.data.detected)
     {
+
       if (MirrorCode != Code)
       {
         MirrorCode = Code;
@@ -123,7 +124,5 @@ int main()
     {
       MirrorCode = 0;
     }
-
-    //_delay_ms(1000);
   }
 }

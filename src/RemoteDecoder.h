@@ -1,6 +1,6 @@
 //****************************************************************************************************************************
 //
-// File Name	   : Remote.h
+// File Name      : Remote.h
 // Title          : Remote interface header file
 // software       : version 3.0
 // Target MCU     : Atmel AVR Series
@@ -42,119 +42,69 @@ extern "C"
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Interface Function use Class <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //=======================================================================================================
 
-//=============================================================================
-// RemoteDecoder Class
-//-----------------------------------------------------------------------------
-// RF remote control decoder for AVR microcontrollers.
-//
-// Supported protocols:
-//
-//   - EV1527
-//   - HS1527
-//   - PT2262
-//   - SC2262
-//   - LX2262
-//   - HT12E
-//   - HT6P20B
-//
-// The decoder uses INT0 and Timer1 to measure pulse widths and reconstruct
-// the received frame according to the selected protocol configuration.
-//
-// Example:
-//
-//      #include "RemoteDecoder.h"
-//
-//      RemoteDecoder Remote(
-//          PORTD,
-//          DDRD,
-//          PD2,
-//          PULL_UP);
-//
-//      int main(void)
-//      {
-//          RemoteDecoder::initialize(EV1527_CONFIG);
-//
-//          while (1)
-//          {
-//              if (RemoteDecoder::data.detected)
-//              {
-//                  uint32_t address =
-//                      RemoteDecoder::data.address;
-//
-//                  uint8_t key =
-//                      RemoteDecoder::data.key;
-//
-//                  RemoteDecoder::data.detected = false;
-//              }
-//          }
-//      }
-//
-// Decoded data:
-//
-//      RemoteDecoder::data.frame
-//      RemoteDecoder::data.address
-//      RemoteDecoder::data.key
-//      RemoteDecoder::data.detected
-//
-//=============================================================================
+/**
+ * @class RemoteDecoder
+ * @brief A robust infrared remote control signal decoder for AVR microcontrollers.
+ *
+ * This class provides a complete solution for decoding common IR remote protocols
+ * (such as NEC, Sony, RC5, etc.) using external interrupt INT0 and Timer1.
+ *
+ * It supports configurable timing parameters, tolerance, and different pin modes.
+ * The decoder works in the background via interrupts and stores the received packet
+ * in the static member `data`.
+ *
+ * @note Only one active decoder instance is typically needed. Multiple instances
+ *       are supported but share the same interrupt and timer resources.
+ */
 class RemoteDecoder
 {
 public:
-   public:
-
-   //-------------------------------------------------------------------------
-   // سازنده کلاس
-   //-------------------------------------------------------------------------
-   // پین ورودی مورد استفاده برای دریافت سیگنال ریموت را پیکربندی می‌کند.
-   // در صورت انتخاب PULL_UP مقاومت Pull-Up داخلی نیز فعال خواهد شد.
-   //
-   // Portx : رجیستر PORT مربوط به پایه ورودی
-   // Ddrx  : رجیستر DDR مربوط به پایه ورودی
-   // Pin   : شماره پایه ورودی
-   // Mode  : نوع ورودی (Pull-Up یا Pull-Down)
-   //-------------------------------------------------------------------------
+   /**
+    * @brief Constructs a RemoteDecoder object and configures the input pin.
+    *
+    * @param Portx Reference to the PORT register of the pin (e.g. PORTD)
+    * @param Ddrx  Reference to the DDR register of the pin (e.g. DDRD)
+    * @param Pin   Pin number (0-7)
+    * @param Mode  InterruptMode::PULL_UP or InterruptMode::PULL_DOWN
+    */
    RemoteDecoder(volatile uint8_t &Portx,
                  volatile uint8_t &Ddrx,
                  uint8_t Pin,
                  InterruptMode Mode);
 
-   //-------------------------------------------------------------------------
-   // مخرب کلاس
-   //-------------------------------------------------------------------------
-   // تعداد نمونه‌های فعال کلاس را مدیریت می‌کند.
-   //-------------------------------------------------------------------------
+   /**
+    * @brief Destructor. Decrements instance counter.
+    */
    ~RemoteDecoder();
 
-   //-------------------------------------------------------------------------
-   // آخرین داده دیکود شده
-   //-------------------------------------------------------------------------
-   // پس از دریافت موفق یک فریم معتبر، اطلاعات زیر در این ساختار قرار می‌گیرد:
-   //
-   // data.frame     : فریم کامل دریافتی
-   // data.address   : آدرس استخراج شده
-   // data.key       : کد کلید استخراج شده
-   // data.detected  : نشان‌دهنده دریافت موفق فریم
-   //-------------------------------------------------------------------------
+   /**
+    * @brief Static member that holds the latest decoded remote packet.
+    *
+    * After a successful decode, check `data.detected` and read `data.address`,
+    * `data.key`, etc.
+    */
    static RemotePacket data;
 
-   //-------------------------------------------------------------------------
-   // راه‌اندازی دیکودر
-   //-------------------------------------------------------------------------
-   // دیکودر را با تنظیمات پروتکل مشخص شده فعال می‌کند.
-   // این تابع Timer1 و INT0 را مقداردهی و فعال می‌کند.
-   //
-   // مثال:
-   //      RemoteDecoder::initialize(EV1527_CONFIG);
-   //-------------------------------------------------------------------------
+   /**
+    * @brief Initializes the remote decoder with protocol configuration.
+    *
+    * This function sets up Timer1, configures the interrupt, builds timing
+    * limits based on the provided configuration, and enables the decoder.
+    *
+    * @param config Reference to a RemoteConfig structure containing protocol timing parameters.
+    */
    static void initialize(const RemoteConfig &config);
 
-   //-------------------------------------------------------------------------
-   // توقف دیکودر
-   //-------------------------------------------------------------------------
-   // وقفه INT0 و Timer1 را غیرفعال کرده و وضعیت داخلی دیکودر را پاک می‌کند.
-   //-------------------------------------------------------------------------
+   /**
+    * @brief Deinitializes the decoder, disables interrupt and timer.
+    *
+    * Call this when you no longer need the remote decoder to free resources.
+    */
    static void deinitialize(void);
-   
+
+   /**
+    * @brief Friend declaration to allow ISR access to private static members.
+    */
    friend void INT0_vect(void);
 
 private:
