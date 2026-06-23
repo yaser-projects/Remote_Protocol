@@ -204,7 +204,7 @@ void RemoteDecoder::deinitialize(void)
 //=============================================================================
 //-------------------------- Check whether pulse timings match the sync pattern
 //=============================================================================
-inline bool RemoteDecoder::IsSyncPulse(uint16_t h, uint16_t l)
+inline bool RemoteDecoder::isSyncPulse(uint16_t h, uint16_t l)
 {
 	return (h >= timing.sync.highTime.min) &&
 		   (h <= timing.sync.highTime.max) &&
@@ -214,7 +214,7 @@ inline bool RemoteDecoder::IsSyncPulse(uint16_t h, uint16_t l)
 //=============================================================================
 //-------------------------- Check whether pulse timings represent a logic '0'.
 //=============================================================================
-inline bool RemoteDecoder::IsBitZero(uint16_t h, uint16_t l)
+inline bool RemoteDecoder::isBitZero(uint16_t h, uint16_t l)
 {
 	return (h >= timing.bit0.highTime.min) &&
 		   (h <= timing.bit0.highTime.max) &&
@@ -256,11 +256,11 @@ void RemoteDecoder::Decoder(void)
 		bitIndex--;
 		registerBitSet(frameData, bitIndex);
 	}
-	else if (IsBitZero(highTicks, lowTicks))
+	else if (isBitZero(highTicks, lowTicks))
 	{
 		bitIndex--;
 	}
-	else if (IsSyncPulse(highTicks, lowTicks))
+	else if (isSyncPulse(highTicks, lowTicks))
 	{
 		if (bitIndex == 0)
 		{
