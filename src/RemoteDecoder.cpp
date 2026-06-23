@@ -26,13 +26,16 @@ volatile uint16_t RemoteDecoder::highTicks;
 volatile uint16_t RemoteDecoder::lowTicks;
 uint16_t RemoteDecoder::minTimeTicks;
 uint16_t RemoteDecoder::maxTimeTicks;
-//volatile bool RemoteDecoder::decodePending = false;
 //****************************************************************************************************************************
-//---------------------------------------------------- Button Function codes -------------------------------------------------
+//---------------------------------------------------- Remote Function codes -------------------------------------------------
 //****************************************************************************************************************************
 //------ Function: Constructor - Initialization of Port, Pin and  Mode interupt
 //=============================================================================
-RemoteDecoder::RemoteDecoder(volatile uint8_t &Portx, volatile uint8_t &Ddrx, uint8_t Pin, InterruptMode Mode)
+RemoteDecoder::RemoteDecoder(
+	volatile uint8_t &Portx,
+	volatile uint8_t &Ddrx,
+	uint8_t Pin,
+	InterruptMode Mode)
 {
 	// Set port pin as pull-up or pull-down
 	registerBitClear(Portx, Pin);
@@ -120,7 +123,10 @@ void RemoteDecoder::buildTimingLimits(const RemoteConfig &config)
 //=============================================================================
 //-------------------------------- Calculate pulse timing limits in timer ticks
 //=============================================================================
-void RemoteDecoder::calculatePulseTiming(PulseTiming &pulse, uint8_t highRatio, uint8_t lowRatio)
+void RemoteDecoder::calculatePulseTiming(
+	PulseTiming &pulse,
+	uint8_t highRatio,
+	uint8_t lowRatio)
 {
 	uint32_t expectedHigh = (uint32_t)activeConfig.pulseWidthUs * highRatio;
 	uint32_t expectedLow = (uint32_t)activeConfig.pulseWidthUs * lowRatio;
@@ -248,9 +254,6 @@ inline void RemoteDecoder::resetBuffer(void)
 //=============================================================================
 void RemoteDecoder::Decoder(void)
 {
-	// if (!decodeFlag)
-	// 	return;
-
 	if (isBitOne(highTicks, lowTicks))
 	{
 		bitIndex--;
@@ -277,8 +280,6 @@ void RemoteDecoder::Decoder(void)
 	}
 	else
 		resetBuffer();
-
-	//decodePending = false;
 }
 //=============================================================================
 // Measure pulse width on INT0 edges and switch trigger between rising/falling for bit decoding
@@ -292,7 +293,6 @@ ISR(INT0_vect)
 	{
 		RemoteDecoder::lowTicks = (elapsedTicks >= RemoteDecoder::minTimeTicks && elapsedTicks <= RemoteDecoder::maxTimeTicks) ? elapsedTicks : 0;
 		MCUCR = (1 << ISC01); // Set interrupt on falling edge
-							  // RemoteDecoder::decodeFlag = true;
 		RemoteDecoder::Decoder();
 	}
 	else

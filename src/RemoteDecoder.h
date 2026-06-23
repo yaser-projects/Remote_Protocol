@@ -170,7 +170,6 @@ private:
    static volatile uint16_t lowTicks;
    static uint16_t minTimeTicks;
    static uint16_t maxTimeTicks;
-   //static volatile bool decodePending;
 
    static void selectTimer1Prescaler(uint16_t desiredTickUs);
    static void buildTimingLimits(const RemoteConfig &config);
