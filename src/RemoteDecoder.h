@@ -181,7 +181,7 @@ private:
 
    static bool isSyncPulse(uint16_t h, uint16_t l);
    static bool isBitZero(uint16_t h, uint16_t l);
-   static bool isBitOne(uint16_t h, uint16_t l);
+   static bool isBitOne(uint16_t h, uint16_t l);//
 
    static void resetBuffer(void);
    static void Decoder(void);
