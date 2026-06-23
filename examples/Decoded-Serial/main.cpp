@@ -16,6 +16,8 @@
 #include <avr/interrupt.h>
 #include <stdio.h>
 
+#include <util/delay.h>
+
 #include "RemoteDecoder.h"
 
 static uint32_t Code;
@@ -90,15 +92,15 @@ int main()
   UART_Init();
   UART_SendString("\r\n[SYSTEM] EV1527 Receiver Started\r\n");
 
-  RemoteDecoder::init(EV1527_CONFIG);
+  RemoteDecoder::initialize(EV1527_CONFIG);
 
   while (1)
   {
     if (ev1527.data.detected)
     {
-      
       if (MirrorCode != Code)
       {
+        MirrorCode = Code;
         UART_SendString("\r\n [EV1527]");
 
         sprintf(buffer, "\r\n | Frame: 0x%06lX", ev1527.data.frame);
@@ -110,9 +112,7 @@ int main()
         sprintf(buffer, "\r\n | Key:   0x%X\r\n", ev1527.data.key);
         UART_SendString(buffer);
 
-        UART_SendString("\r\n"); 
-
-        MirrorCode = Code;
+        UART_SendString("\r\n");
       }
       else
       {
@@ -123,5 +123,7 @@ int main()
     {
       MirrorCode = 0;
     }
+
+    //_delay_ms(1000);
   }
 }

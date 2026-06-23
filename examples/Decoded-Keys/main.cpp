@@ -27,10 +27,11 @@ int main()
   PORTC = 0x00;
   DDRC = 0xFF;
 
-  RemoteDecoder::init(EV1527_CONFIG);
+  RemoteDecoder::initialize(EV1527_CONFIG);
 
   while (1)
   {
+   // ev1527.Decoder();
 
      if (ev1527.data.detected)
      {

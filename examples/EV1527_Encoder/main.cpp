@@ -8,9 +8,7 @@
 // Author:      : Yaser Rashnabadi
 //
 //******************************************************************************************************
-#ifndef F_CPU
 #define F_CPU 16000000UL
-#endif
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -74,8 +72,8 @@ int main()
 
     Code = 0;
     Code = (uint32_t)(a << 16) |
-           (uint32_t)(b << 8) |
-           (uint32_t)(c << 4) |
+           //(uint32_t)(b << 8) |
+           //(uint32_t)(c << 4) |
            (uint32_t)(key << 0);
 
     if (key)

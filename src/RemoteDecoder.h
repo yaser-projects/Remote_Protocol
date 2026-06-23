@@ -11,6 +11,10 @@
 #ifndef REMOTE_DECODER_H_
 #define REMOTE_DECODER_H_
 
+#ifndef F_CPU
+#define F_CPU 1000000UL
+#endif
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdint.h>
@@ -45,23 +49,41 @@ public:
 
    ~RemoteDecoder();
 
-  static RemotePacket data;
+   static RemotePacket data;
 
-   static void init(const RemoteConfig &config);
-   static void deInit(void);
-   static void Decoder(void);
+   static void initialize(const RemoteConfig &config);
+   static void deinitialize(void);
+   
+   friend void INT0_vect(void);
 
 private:
    static uint8_t instanceCount; // تعداد اشیائ ساخته شده از کلاس
+   static TimingTable timing;
+   static RemoteConfig activeConfig;
+   static uint16_t timerTickUs;
+   static volatile uint32_t bitIndex;
+   static volatile uint32_t frameData;
+   static uint32_t addressMask;
 
-   static volatile uint32_t bit;
-   static volatile uint32_t value;
+   static volatile uint16_t highTicks;
+   static volatile uint16_t lowTicks;
+   static uint16_t minTimeTicks;
+   static uint16_t maxTimeTicks;
+   //static volatile bool decodePending;
+
+   static void selectTimer1Prescaler(uint16_t desiredTickUs);
+   static void buildTimingLimits(const RemoteConfig &config);
+   static void calculatePulseTiming(
+       PulseTiming &pulse,
+       uint8_t highRatio,
+       uint8_t lowRatio);
 
    static bool IsSyncPulse(uint16_t h, uint16_t l);
    static bool IsBitZero(uint16_t h, uint16_t l);
-   static bool IsBitOne(uint16_t h, uint16_t l);
+   static bool isBitOne(uint16_t h, uint16_t l);
 
-   static void Reset_Buffer(void);
+   static void resetBuffer(void);
+   static void Decoder(void);
 };
 //======================================================================================================
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  End Class <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
